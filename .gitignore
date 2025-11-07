@@ -1,0 +1,26 @@
+# Build outputs
+build/
+cmake-build-*/
+*.o
+*.elf
+*.iso
+*.bin
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Temporary files
+*.log
+*.tmp
+
+# Binary outputs
+main

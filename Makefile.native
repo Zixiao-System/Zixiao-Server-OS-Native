@@ -1,0 +1,121 @@
+# Makefile.native - 使用本机编译器的替代构建系统
+# 适用于 macOS ARM64，可以直接编译 ARM64 版本
+
+# 架构检测
+ARCH := $(shell uname -m)
+
+# 目录
+SRC_DIR := src
+BUILD_DIR := build
+INCLUDE_DIR := $(SRC_DIR)/include
+
+# 通用源文件
+KERNEL_LIB_C := $(SRC_DIR)/kernel/lib/string.c \
+                $(SRC_DIR)/kernel/lib/printf.c
+
+KERNEL_FS_C := $(SRC_DIR)/kernel/fs/vfs.c \
+               $(SRC_DIR)/kernel/fs/initrd.c
+
+# ARM64 配置 (使用交叉编译器)
+ARM64_CC := aarch64-unknown-linux-gnu-gcc
+ARM64_AS := aarch64-unknown-linux-gnu-as
+ARM64_LD := aarch64-unknown-linux-gnu-ld
+ARM64_OBJCOPY := aarch64-unknown-linux-gnu-objcopy
+
+ARM64_CFLAGS := -ffreestanding -O2 -Wall -Wextra \
+                -nostdlib -fno-builtin -fno-stack-protector \
+                -I$(INCLUDE_DIR)
+
+ARM64_ASFLAGS :=
+
+ARM64_LDFLAGS := -nostdlib -T $(SRC_DIR)/arch/arm64/linker.ld
+
+ARM64_BOOT_S := $(SRC_DIR)/arch/arm64/boot/boot.S
+
+ARM64_C := $(SRC_DIR)/arch/arm64/kernel_main.c \
+           $(SRC_DIR)/arch/arm64/drivers/uart.c \
+           $(SRC_DIR)/arch/arm64/interrupts/exceptions.c
+
+ARM64_OBJS := $(BUILD_DIR)/arm64/boot.o \
+              $(BUILD_DIR)/arm64/kernel_main.o \
+              $(BUILD_DIR)/arm64/uart.o \
+              $(BUILD_DIR)/arm64/exceptions.o \
+              $(BUILD_DIR)/arm64/string.o \
+              $(BUILD_DIR)/arm64/printf.o \
+              $(BUILD_DIR)/arm64/vfs.o \
+              $(BUILD_DIR)/arm64/initrd.o
+
+ARM64_KERNEL := $(BUILD_DIR)/zixiao-arm64.elf
+
+# 默认目标
+.PHONY: all
+all: arm64
+
+# ARM64 构建
+.PHONY: arm64
+arm64: $(ARM64_KERNEL)
+
+$(BUILD_DIR)/arm64:
+	mkdir -p $(BUILD_DIR)/arm64
+
+$(BUILD_DIR)/arm64/boot.o: $(ARM64_BOOT_S) | $(BUILD_DIR)/arm64
+	$(ARM64_AS) $(ARM64_ASFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/arm64/kernel_main.o: $(SRC_DIR)/arch/arm64/kernel_main.c | $(BUILD_DIR)/arm64
+	$(ARM64_CC) $(ARM64_CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/arm64/uart.o: $(SRC_DIR)/arch/arm64/drivers/uart.c | $(BUILD_DIR)/arm64
+	$(ARM64_CC) $(ARM64_CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/arm64/exceptions.o: $(SRC_DIR)/arch/arm64/interrupts/exceptions.c | $(BUILD_DIR)/arm64
+	$(ARM64_CC) $(ARM64_CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/arm64/string.o: $(SRC_DIR)/kernel/lib/string.c | $(BUILD_DIR)/arm64
+	$(ARM64_CC) $(ARM64_CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/arm64/printf.o: $(SRC_DIR)/kernel/lib/printf.c | $(BUILD_DIR)/arm64
+	$(ARM64_CC) $(ARM64_CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/arm64/vfs.o: $(SRC_DIR)/kernel/fs/vfs.c | $(BUILD_DIR)/arm64
+	$(ARM64_CC) $(ARM64_CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/arm64/initrd.o: $(SRC_DIR)/kernel/fs/initrd.c | $(BUILD_DIR)/arm64
+	$(ARM64_CC) $(ARM64_CFLAGS) -c $< -o $@
+
+$(ARM64_KERNEL): $(ARM64_OBJS)
+	$(ARM64_LD) $(ARM64_LDFLAGS) -o $@ $^
+
+# 清理
+.PHONY: clean
+clean:
+	rm -rf $(BUILD_DIR)
+
+# 运行
+.PHONY: run
+run: arm64
+	@if command -v qemu-system-aarch64 >/dev/null 2>&1; then \
+		qemu-system-aarch64 -M virt -cpu cortex-a57 -kernel $(ARM64_KERNEL) -m 512M -nographic; \
+	else \
+		echo "Error: qemu-system-aarch64 not found."; \
+		echo "Install with: brew install qemu"; \
+		exit 1; \
+	fi
+
+# 帮助
+.PHONY: help
+help:
+	@echo "Zixiao OS - Native Build System (macOS ARM64)"
+	@echo ""
+	@echo "Targets:"
+	@echo "  all   - Build ARM64 kernel (default)"
+	@echo "  arm64 - Build ARM64 kernel"
+	@echo "  run   - Build and run ARM64 kernel in QEMU"
+	@echo "  clean - Remove build artifacts"
+	@echo "  help  - Show this help"
+	@echo ""
+	@echo "Requirements:"
+	@echo "  - Xcode Command Line Tools (clang)"
+	@echo "  - QEMU: brew install qemu"
+	@echo ""
+	@echo "Note: This Makefile uses system clang to build ARM64 only."
+	@echo "For full cross-compilation support, use the main Makefile with cross-compilers."

@@ -1,0 +1,35 @@
+# GDB 初始化脚本 - x86_64
+# 使用方法: gdb -x .gdbinit-x86_64
+
+# 连接到 QEMU GDB 服务器
+target remote localhost:1234
+
+# 加载符号文件
+file cmake-build-x86_64/zixiao-x86_64.elf
+
+# 设置架构
+set architecture i386:x86-64
+
+# 设置断点
+break kernel_main
+
+# 显示当前位置
+list
+
+# 打印寄存器
+info registers
+
+echo \n
+echo ==========================================\n
+echo   Zixiao OS x86_64 调试会话已启动\n
+echo ==========================================\n
+echo 提示:\n
+echo   - 'c' 或 'continue': 继续执行\n
+echo   - 's' 或 'step': 单步执行\n
+echo   - 'n' 或 'next': 下一行\n
+echo   - 'info registers': 查看寄存器\n
+echo   - 'bt' 或 'backtrace': 查看调用栈\n
+echo   - 'p variable': 打印变量\n
+echo   - 'x/10x 0xaddress': 查看内存\n
+echo ==========================================\n
+echo \n
