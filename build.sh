@@ -1,0 +1,1 @@
+make -f Makefile.native arm64

@@ -76,7 +76,7 @@ static void pic_remap(void) {
     outb(PIC2_DATA, 0x01);
 
     /* Mask all interrupts except cascade */
-    outb(PIC1_DATA, 0xFD);  /* Enable IRQ1 (keyboard) */
+    outb(PIC1_DATA, 0xFC);  /* Enable IRQ0 (timer) and IRQ1 (keyboard) */
     outb(PIC2_DATA, 0xFF);
 }
 

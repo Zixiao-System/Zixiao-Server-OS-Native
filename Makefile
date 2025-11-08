@@ -19,6 +19,9 @@ KERNEL_LIB_C := $(SRC_DIR)/kernel/lib/string.c \
 KERNEL_FS_C := $(SRC_DIR)/kernel/fs/vfs.c \
                $(SRC_DIR)/kernel/fs/initrd.c
 
+KERNEL_MM_C := $(SRC_DIR)/kernel/mm/pmm.c \
+               $(SRC_DIR)/kernel/mm/kmalloc.c
+
 # x86_64 Configuration
 X86_64_CC := x86_64-elf-gcc
 X86_64_AS := x86_64-elf-as
@@ -48,8 +51,12 @@ X86_64_OBJS := $(BUILD_DIR)/x86_64/boot.o \
                $(BUILD_DIR)/x86_64/keyboard.o \
                $(BUILD_DIR)/x86_64/gdt.o \
                $(BUILD_DIR)/x86_64/idt.o \
+               $(BUILD_DIR)/x86_64/timer.o \
+               $(BUILD_DIR)/x86_64/mmu.o \
                $(BUILD_DIR)/x86_64/string.o \
                $(BUILD_DIR)/x86_64/printf.o \
+               $(BUILD_DIR)/x86_64/pmm.o \
+               $(BUILD_DIR)/x86_64/kmalloc.o \
                $(BUILD_DIR)/x86_64/vfs.o \
                $(BUILD_DIR)/x86_64/initrd.o
 
@@ -62,7 +69,7 @@ ARM64_AS := aarch64-elf-as
 ARM64_LD := aarch64-elf-ld
 
 ARM64_CFLAGS := -ffreestanding -O2 -Wall -Wextra -nostdlib \
-                -I$(INCLUDE_DIR)
+                -I$(INCLUDE_DIR) -g
 
 ARM64_LDFLAGS := -nostdlib -T $(SRC_DIR)/arch/arm64/linker.ld
 
@@ -116,6 +123,18 @@ $(BUILD_DIR)/x86_64/gdt.o: $(SRC_DIR)/arch/x86_64/interrupts/gdt.c | $(BUILD_DIR
 	$(X86_64_CC) $(X86_64_CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/x86_64/idt.o: $(SRC_DIR)/arch/x86_64/interrupts/idt.c | $(BUILD_DIR)/x86_64
+	$(X86_64_CC) $(X86_64_CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/x86_64/timer.o: $(SRC_DIR)/arch/x86_64/interrupts/timer.c | $(BUILD_DIR)/x86_64
+	$(X86_64_CC) $(X86_64_CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/x86_64/mmu.o: $(SRC_DIR)/arch/x86_64/mm/mmu.c | $(BUILD_DIR)/x86_64
+	$(X86_64_CC) $(X86_64_CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/x86_64/pmm.o: $(SRC_DIR)/kernel/mm/pmm.c | $(BUILD_DIR)/x86_64
+	$(X86_64_CC) $(X86_64_CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/x86_64/kmalloc.o: $(SRC_DIR)/kernel/mm/kmalloc.c | $(BUILD_DIR)/x86_64
 	$(X86_64_CC) $(X86_64_CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/x86_64/string.o: $(SRC_DIR)/kernel/lib/string.c | $(BUILD_DIR)/x86_64

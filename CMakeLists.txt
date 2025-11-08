@@ -65,6 +65,18 @@ set(KERNEL_LIB_SOURCES
     src/kernel/lib/printf.c
 )
 
+set(KERNEL_MM_SOURCES
+    src/kernel/mm/pmm.c
+    src/kernel/mm/kmalloc.c
+)
+
+set(KERNEL_SCHED_SOURCES
+    src/kernel/scheduler/sched.c
+    src/kernel/scheduler/task.c
+    src/kernel/scheduler/idle.c
+    src/kernel/scheduler/test_tasks.c
+)
+
 set(KERNEL_FS_SOURCES
     src/kernel/fs/vfs.c
     src/kernel/fs/initrd.c
@@ -75,9 +87,13 @@ if(ARCH STREQUAL "arm64")
     # ARM64 源文件
     set(ARCH_SOURCES
         src/arch/arm64/boot/boot.S
+        src/arch/arm64/scheduler/context_switch.S
         src/arch/arm64/kernel_main.c
         src/arch/arm64/drivers/uart.c
         src/arch/arm64/interrupts/exceptions.c
+        src/arch/arm64/interrupts/gic.c
+        src/arch/arm64/interrupts/timer.c
+        src/arch/arm64/mm/mmu.c
     )
 
     # 链接器脚本
@@ -99,6 +115,7 @@ elseif(ARCH STREQUAL "x86_64")
     # x86_64 源文件
     set(ARCH_SOURCES
         src/arch/x86_64/boot/boot.S
+        src/arch/x86_64/scheduler/context_switch.S
         src/arch/x86_64/kernel_main.c
         src/arch/x86_64/drivers/vga.c
         src/arch/x86_64/drivers/keyboard.c
@@ -106,6 +123,8 @@ elseif(ARCH STREQUAL "x86_64")
         src/arch/x86_64/interrupts/gdt_flush.S
         src/arch/x86_64/interrupts/idt.c
         src/arch/x86_64/interrupts/interrupts.S
+        src/arch/x86_64/interrupts/timer.c
+        src/arch/x86_64/mm/mmu.c
     )
 
     # 链接器脚本
@@ -128,6 +147,8 @@ endif()
 add_executable(${KERNEL_OUTPUT}
     ${ARCH_SOURCES}
     ${KERNEL_LIB_SOURCES}
+    ${KERNEL_MM_SOURCES}
+    ${KERNEL_SCHED_SOURCES}
     ${KERNEL_FS_SOURCES}
 )
 

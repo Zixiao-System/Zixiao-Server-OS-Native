@@ -45,22 +45,44 @@ void console_printf(const char* fmt, ...) {
     while (*fmt) {
         if (*fmt == '%') {
             fmt++;
+
+            /* Check for 'll' prefix (long long) */
+            int is_long_long = 0;
+            if (*fmt == 'l' && *(fmt + 1) == 'l') {
+                is_long_long = 1;
+                fmt += 2;
+            }
+
             switch (*fmt) {
                 case 'd':
                 case 'i': {
-                    int val = va_arg(args, int);
-                    print_int(val, 10, 1);
+                    if (is_long_long) {
+                        int64_t val = va_arg(args, int64_t);
+                        print_int(val, 10, 1);
+                    } else {
+                        int val = va_arg(args, int);
+                        print_int(val, 10, 1);
+                    }
                     break;
                 }
                 case 'u': {
-                    unsigned int val = va_arg(args, unsigned int);
-                    print_int(val, 10, 0);
+                    if (is_long_long) {
+                        uint64_t val = va_arg(args, uint64_t);
+                        print_int(val, 10, 0);
+                    } else {
+                        unsigned int val = va_arg(args, unsigned int);
+                        print_int(val, 10, 0);
+                    }
                     break;
                 }
                 case 'x': {
-                    unsigned int val = va_arg(args, unsigned int);
-                    console_write("0x");
-                    print_int(val, 16, 0);
+                    if (is_long_long) {
+                        uint64_t val = va_arg(args, uint64_t);
+                        print_int(val, 16, 0);
+                    } else {
+                        unsigned int val = va_arg(args, unsigned int);
+                        print_int(val, 16, 0);
+                    }
                     break;
                 }
                 case 'p': {
@@ -84,6 +106,9 @@ void console_printf(const char* fmt, ...) {
                     break;
                 default:
                     console_putchar('%');
+                    if (is_long_long) {
+                        console_write("ll");
+                    }
                     console_putchar(*fmt);
                     break;
             }

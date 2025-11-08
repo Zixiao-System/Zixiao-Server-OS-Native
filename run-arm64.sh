@@ -22,4 +22,8 @@ qemu-system-aarch64 \
     -kernel build/zixiao-arm64.elf \
     -m 512M \
     -nographic \
-    -serial mon:stdio
+    -serial mon:stdio \
+
+
+
+

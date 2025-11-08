@@ -1,5 +1,6 @@
 #include <kernel/console.h>
 #include <kernel/types.h>
+#include <arch/arm64_gic.h>
 
 void arm64_exception_handler(void) {
     console_printf("\n*** ARM64 EXCEPTION ***\n");
@@ -10,30 +11,21 @@ void arm64_exception_handler(void) {
 }
 
 void arm64_irq_handler(void) {
-    /* IRQ handling - to be implemented with GIC */
-    console_printf("IRQ received\n");
+    /* Dispatch IRQ via GIC */
+    gic_handle_irq();
 }
 
 void interrupts_init(void) {
-    /* GIC initialization - placeholder for now */
-    console_printf("ARM64 interrupt system initialized\n");
+    /* Initialize GIC */
+    gic_init();
 }
 
 void interrupts_enable(void) {
+    /* Unmask IRQ interrupts at CPU level (clear DAIF.I bit) */
     __asm__ volatile("msr daifclr, #2" ::: "memory");
 }
 
 void interrupts_disable(void) {
+    /* Mask IRQ interrupts at CPU level (set DAIF.I bit) */
     __asm__ volatile("msr daifset, #2" ::: "memory");
-}
-
-void irq_install_handler(uint8_t irq, void (*handler)(void)) {
-    /* GIC IRQ handler installation - placeholder */
-    (void)irq;
-    (void)handler;
-}
-
-void irq_uninstall_handler(uint8_t irq) {
-    /* GIC IRQ handler removal - placeholder */
-    (void)irq;
 }

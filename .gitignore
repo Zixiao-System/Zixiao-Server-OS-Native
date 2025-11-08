@@ -24,3 +24,5 @@ cmake-build-*/
 
 # Binary outputs
 main
+/verify_offsets
+/verify_offsets.c
