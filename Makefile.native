@@ -24,6 +24,8 @@ KERNEL_SCHED_C := $(SRC_DIR)/kernel/scheduler/sched.c \
 KERNEL_FS_C := $(SRC_DIR)/kernel/fs/vfs.c \
                $(SRC_DIR)/kernel/fs/initrd.c
 
+KERNEL_PANIC_C := $(SRC_DIR)/kernel/panic.c
+
 # ARM64 配置 (使用交叉编译器)
 ARM64_CC := aarch64-unknown-linux-gnu-gcc
 ARM64_AS := aarch64-unknown-linux-gnu-as
@@ -48,7 +50,8 @@ ARM64_C := $(SRC_DIR)/arch/arm64/kernel_main.c \
            $(SRC_DIR)/arch/arm64/interrupts/exceptions.c \
            $(SRC_DIR)/arch/arm64/interrupts/gic.c \
            $(SRC_DIR)/arch/arm64/interrupts/timer.c \
-           $(SRC_DIR)/arch/arm64/mm/mmu.c
+           $(SRC_DIR)/arch/arm64/mm/mmu.c \
+           $(SRC_DIR)/arch/arm64/panic.c
 
 ARM64_OBJS := $(BUILD_DIR)/arm64/boot.o \
               $(BUILD_DIR)/arm64/context_switch.o \
@@ -67,7 +70,9 @@ ARM64_OBJS := $(BUILD_DIR)/arm64/boot.o \
               $(BUILD_DIR)/arm64/idle.o \
               $(BUILD_DIR)/arm64/test_tasks.o \
               $(BUILD_DIR)/arm64/vfs.o \
-              $(BUILD_DIR)/arm64/initrd.o
+              $(BUILD_DIR)/arm64/initrd.o \
+              $(BUILD_DIR)/arm64/panic.o \
+              $(BUILD_DIR)/arm64/arch_panic.o
 
 ARM64_KERNEL := $(BUILD_DIR)/zixiao-arm64.elf
 
@@ -134,6 +139,12 @@ $(BUILD_DIR)/arm64/vfs.o: $(SRC_DIR)/kernel/fs/vfs.c | $(BUILD_DIR)/arm64
 	$(ARM64_CC) $(ARM64_CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/arm64/initrd.o: $(SRC_DIR)/kernel/fs/initrd.c | $(BUILD_DIR)/arm64
+	$(ARM64_CC) $(ARM64_CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/arm64/panic.o: $(SRC_DIR)/kernel/panic.c | $(BUILD_DIR)/arm64
+	$(ARM64_CC) $(ARM64_CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/arm64/arch_panic.o: $(SRC_DIR)/arch/arm64/panic.c | $(BUILD_DIR)/arm64
 	$(ARM64_CC) $(ARM64_CFLAGS) -c $< -o $@
 
 $(ARM64_KERNEL): $(ARM64_OBJS)

@@ -8,12 +8,16 @@ typedef __builtin_va_list va_list;
 #define va_arg(ap, type) __builtin_va_arg(ap, type)
 #define va_end(ap) __builtin_va_end(ap)
 
-static void print_int(int64_t num, int base, int is_signed) {
+static void print_int(int64_t num, int base, int is_signed, int width, char pad_char) {
     char buffer[32];
     int i = 0;
     int is_negative = 0;
 
     if (num == 0) {
+        /* Handle zero padding */
+        for (int j = 1; j < width; j++) {
+            console_putchar(pad_char);
+        }
         console_putchar('0');
         return;
     }
@@ -31,6 +35,12 @@ static void print_int(int64_t num, int base, int is_signed) {
         unum = unum / base;
     }
 
+    /* Add padding */
+    int total_chars = i + (is_negative ? 1 : 0);
+    for (int j = total_chars; j < width; j++) {
+        console_putchar(pad_char);
+    }
+
     if (is_negative)
         console_putchar('-');
 
@@ -46,6 +56,20 @@ void console_printf(const char* fmt, ...) {
         if (*fmt == '%') {
             fmt++;
 
+            /* Check for padding character (0 or space) */
+            char pad_char = ' ';
+            if (*fmt == '0') {
+                pad_char = '0';
+                fmt++;
+            }
+
+            /* Parse width */
+            int width = 0;
+            while (*fmt >= '0' && *fmt <= '9') {
+                width = width * 10 + (*fmt - '0');
+                fmt++;
+            }
+
             /* Check for 'll' prefix (long long) */
             int is_long_long = 0;
             if (*fmt == 'l' && *(fmt + 1) == 'l') {
@@ -58,37 +82,37 @@ void console_printf(const char* fmt, ...) {
                 case 'i': {
                     if (is_long_long) {
                         int64_t val = va_arg(args, int64_t);
-                        print_int(val, 10, 1);
+                        print_int(val, 10, 1, width, pad_char);
                     } else {
                         int val = va_arg(args, int);
-                        print_int(val, 10, 1);
+                        print_int(val, 10, 1, width, pad_char);
                     }
                     break;
                 }
                 case 'u': {
                     if (is_long_long) {
                         uint64_t val = va_arg(args, uint64_t);
-                        print_int(val, 10, 0);
+                        print_int(val, 10, 0, width, pad_char);
                     } else {
                         unsigned int val = va_arg(args, unsigned int);
-                        print_int(val, 10, 0);
+                        print_int(val, 10, 0, width, pad_char);
                     }
                     break;
                 }
                 case 'x': {
                     if (is_long_long) {
                         uint64_t val = va_arg(args, uint64_t);
-                        print_int(val, 16, 0);
+                        print_int(val, 16, 0, width, pad_char);
                     } else {
                         unsigned int val = va_arg(args, unsigned int);
-                        print_int(val, 16, 0);
+                        print_int(val, 16, 0, width, pad_char);
                     }
                     break;
                 }
                 case 'p': {
                     uint64_t val = va_arg(args, uint64_t);
                     console_write("0x");
-                    print_int(val, 16, 0);
+                    print_int(val, 16, 0, 0, ' ');
                     break;
                 }
                 case 's': {

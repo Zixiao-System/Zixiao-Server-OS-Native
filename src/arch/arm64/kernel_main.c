@@ -2,6 +2,7 @@
 #include <kernel/types.h>
 #include <kernel/mm.h>
 #include <kernel/sched.h>
+#include <kernel/panic.h>
 #include <arch/interrupts.h>
 #include <arch/arm64_mmu.h>
 #include <arch/arm64_timer.h>
@@ -138,12 +139,41 @@ void kernel_main(void) {
     task_ready(task_c);
 
     console_printf("\nScheduler ready! Starting task execution...\n");
-    console_printf("(Press Ctrl+A then X to exit QEMU)\n\n");
+    console_printf("(Press 'p' to test kernel panic, Ctrl+A then X to exit QEMU)\n\n");
 
     /* Become the idle task - enter infinite loop with WFI */
     console_printf("Entering idle loop (kernel_main becomes idle task)...\n\n");
 
     while (1) {
+        /* Check for UART input to trigger panic test */
+        if (uart_has_data()) {
+            char c = uart_getchar();
+            if (c == 'p' || c == 'P') {
+                /* Trigger a test kernel panic */
+                console_printf("\n\n*** User requested kernel panic test ***\n");
+
+                /* Prepare register dump (current state) */
+                panic_regs_t regs;
+                __builtin_memset(&regs, 0, sizeof(regs));
+
+                /* Capture current registers */
+                uint64_t sp, lr, pc;
+                __asm__ volatile("mov %0, sp" : "=r"(sp));
+                __asm__ volatile("mov %0, x30" : "=r"(lr));
+                __asm__ volatile("adr %0, ." : "=r"(pc));
+
+                regs.sp = sp;
+                regs.lr = lr;
+                regs.pc = pc;
+
+                /* Read processor state */
+                __asm__ volatile("mrs %0, NZCV" : "=r"(regs.flags));
+
+                /* Trigger panic with a demonstration message */
+                kernel_panic("User-triggered test panic", &regs);
+            }
+        }
+
         /* Wait for interrupt - scheduler will be triggered by timer */
         __asm__ volatile("wfi");
     }
